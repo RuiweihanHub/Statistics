@@ -9,6 +9,8 @@
 #include <vector>
 #include <algorithm>
 #include <limits> // 用于输入验证
+#include <sstream> // 用于字符串流处理
+#include <conio.h> // 用于_kbhit()和_getch()函数
 using namespace std;
 
 /* ==========================  数据定义  ========================== */
@@ -193,14 +195,14 @@ vector<Achievement> achievements = {
 };
 
 string Statistics = R"(
-                         ###################################################################
-                         #       ____ _____  _  _____ ___ ____ _____ ___ ____ ____         #
-                         #      / ___|_   _|/ \|_   _|_ _/ ___|_   _|_ _/ ___/ ___|        #
-                         #      \___ \ | | / _ \ | |  | |\___ \ | |  | | |   \___ \        #
-                         #       ___) || |/ ___ \| |  | | ___) || |  | | |___ ___) |       #
-                         #      |____/ |_/_/   \_\_| |___|____/ |_| |___|\____|____/       #
-                         #                                                                 #
-                         ###################################################################
+###################################################################
+#       ____ _____  _  _____ ___ ____ _____ ___ ____ ____         #
+#      / ___|_   _|/ \|_   _|_ _/ ___|_   _|_ _/ ___/ ___|        #
+#      \___ \ | | / _ \ | |  | |\___ \ | |  | | |   \___ \        #
+#       ___) || |/ ___ \| |  | | ___) || |  | | |___ ___) |       #
+#      |____/ |_/_/   \_\_| |___|____/ |_| |___|\____|____/       #
+#                                                                 #
+###################################################################
 )";
 
 // 函数声明
@@ -240,8 +242,34 @@ void showPickaxeStatus();
 void showLadderStatus();
 bool canReturnToSurface();
 void useMetalDetector();
+void centerText(const string& text);
 
 /* ==========================  工具函数  ========================== */
+// 获取控制台宽度的函数
+int getConsoleWidth() {
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
+        return csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    }
+    return 100; // 默认值，以防获取失败
+}
+
+// 居中显示文本函数
+void centerText(const string& text) {
+    int CONSOLE_WIDTH = getConsoleWidth(); // 获取控制台宽度
+    stringstream ss(text);
+    string line;
+    
+    while (getline(ss, line)) {
+        int padding = (CONSOLE_WIDTH - line.length()) / 2;
+        if (padding > 0) {
+            cout << string(padding, ' ') << line << endl;
+        } else {
+            cout << line << endl;
+        }
+    }
+}
+
 string getCurrentDate() {
     time_t now = time(0);
     tm* ltm = localtime(&now);
@@ -386,138 +414,175 @@ bool hasBackpackSpace(int count) {
 
 /* ==========================  存档/读档  ========================== */
 void saveUserData() {
-    ofstream file(currentUser.username + ".dat");
+    // 对于Administrator用户，数据存储在config.ini中
+    // 对于普通用户，数据存储在user_save.ini中
+    string filename = (currentUser.username == "Administrator") ? "config.ini" : "user_save.ini";
+    ofstream file(filename);
     if (file.is_open()) {
-        file << currentUser.username << endl;
+        // 写入用户标记，用于区分不同用户的数据
+        file << "[User:" << currentUser.username << "]" << endl;
+        file << "username=" << currentUser.username << endl;
         // 不保存密码（对于所有用户）
-        file << "" << endl;
-        file << currentUser.money << endl;
-        file << currentUser.experience << endl;
-        file << currentUser.lotteryCount << endl;
-        file << currentUser.totalMining << endl;
-        file << currentUser.totalLottery << endl;
-        file << currentUser.registerDate << endl;
-        file << currentUser.lastLoginDate << endl;
-        file << currentUser.health << endl;
-        file << currentUser.maxHealth << endl;
-        file << currentUser.fatigue << endl;
-        file << currentUser.maxFatigue << endl;
-        file << currentUser.hunger << endl;
-        file << currentUser.thirst << endl;
-        file << currentUser.warmth << endl;      // 新增
-        file << currentUser.fear << endl;         // 新增
-        file << currentUser.oxygen << endl;
-        file << currentUser.food << endl;
-        file << currentUser.water << endl;
-        file << currentUser.bandage << endl;
-        file << currentUser.trapWire << endl;
-        file << currentUser.mine << endl;
-        file << currentUser.bed << endl;
-        file << currentUser.bedDurability << endl;
-        file << currentUser.woodPickaxe << endl;
-        file << currentUser.stonePickaxe << endl;
-        file << currentUser.copperPickaxe << endl;
-        file << currentUser.ironPickaxe << endl;
-        file << currentUser.diamondPickaxe << endl;
-        file << currentUser.magicPickaxe << endl;
-        file << currentUser.woodPickaxeDurability << endl;
-        file << currentUser.stonePickaxeDurability << endl;
-        file << currentUser.copperPickaxeDurability << endl;
-        file << currentUser.ironPickaxeDurability << endl;
-        file << currentUser.diamondPickaxeDurability << endl;
-        file << currentUser.magicPickaxeDurability << endl;
-        file << currentUser.isNight << endl;
-        file << currentUser.dayCount << endl;
-        file << currentUser.breathPotion << endl;
-        file << currentUser.luckPotion << endl;
-        file << currentUser.healthPotion << endl;
-        file << currentUser.fatiguePotion << endl;
-        file << currentUser.nightVisionPotion << endl;
-        file << currentUser.strengthPotion << endl;
-        file << currentUser.mapLeft << endl;
-        file << currentUser.mapRight << endl;
-        file << currentUser.mapDown << endl;
-        file << currentUser.keepInventory << endl;
-        file << currentUser.autoLogin << endl;
-        file << currentUser.depth << endl;
-        file << currentUser.positionX << endl;
-        file << currentUser.positionY << endl;
-        file << currentUser.ladders << endl;
-        file << currentUser.currentLadderLength << endl;
-        file << currentUser.currentLadderDurability << endl;
-        file << currentUser.ladderPlaced << endl;
-        file << currentUser.backpackSize << endl;      // 新增
-        file << currentUser.storageBox << endl;        // 新增
-        file << currentUser.metalDetector << endl;     // 新增
-        file << currentUser.batteries << endl;         // 新增
+        file << "password=" << endl;
+        file << "money=" << currentUser.money << endl;
+        file << "experience=" << currentUser.experience << endl;
+        file << "lotteryCount=" << currentUser.lotteryCount << endl;
+        file << "totalMining=" << currentUser.totalMining << endl;
+        file << "totalLottery=" << currentUser.totalLottery << endl;
+        file << "registerDate=" << currentUser.registerDate << endl;
+        file << "lastLoginDate=" << currentUser.lastLoginDate << endl;
+        file << "health=" << currentUser.health << endl;
+        file << "maxHealth=" << currentUser.maxHealth << endl;
+        file << "fatigue=" << currentUser.fatigue << endl;
+        file << "maxFatigue=" << currentUser.maxFatigue << endl;
+        file << "hunger=" << currentUser.hunger << endl;
+        file << "thirst=" << currentUser.thirst << endl;
+        file << "warmth=" << currentUser.warmth << endl;
+        file << "fear=" << currentUser.fear << endl;
+        file << "oxygen=" << currentUser.oxygen << endl;
+        file << "food=" << currentUser.food << endl;
+        file << "water=" << currentUser.water << endl;
+        file << "bandage=" << currentUser.bandage << endl;
+        file << "trapWire=" << currentUser.trapWire << endl;
+        file << "mine=" << currentUser.mine << endl;
+        file << "bed=" << currentUser.bed << endl;
+        file << "bedDurability=" << currentUser.bedDurability << endl;
+        file << "woodPickaxe=" << currentUser.woodPickaxe << endl;
+        file << "stonePickaxe=" << currentUser.stonePickaxe << endl;
+        file << "copperPickaxe=" << currentUser.copperPickaxe << endl;
+        file << "ironPickaxe=" << currentUser.ironPickaxe << endl;
+        file << "diamondPickaxe=" << currentUser.diamondPickaxe << endl;
+        file << "magicPickaxe=" << currentUser.magicPickaxe << endl;
+        file << "woodPickaxeDurability=" << currentUser.woodPickaxeDurability << endl;
+        file << "stonePickaxeDurability=" << currentUser.stonePickaxeDurability << endl;
+        file << "copperPickaxeDurability=" << currentUser.copperPickaxeDurability << endl;
+        file << "ironPickaxeDurability=" << currentUser.ironPickaxeDurability << endl;
+        file << "diamondPickaxeDurability=" << currentUser.diamondPickaxeDurability << endl;
+        file << "magicPickaxeDurability=" << currentUser.magicPickaxeDurability << endl;
+        file << "isNight=" << currentUser.isNight << endl;
+        file << "dayCount=" << currentUser.dayCount << endl;
+        file << "breathPotion=" << currentUser.breathPotion << endl;
+        file << "luckPotion=" << currentUser.luckPotion << endl;
+        file << "healthPotion=" << currentUser.healthPotion << endl;
+        file << "fatiguePotion=" << currentUser.fatiguePotion << endl;
+        file << "nightVisionPotion=" << currentUser.nightVisionPotion << endl;
+        file << "strengthPotion=" << currentUser.strengthPotion << endl;
+        file << "mapLeft=" << currentUser.mapLeft << endl;
+        file << "mapRight=" << currentUser.mapRight << endl;
+        file << "mapDown=" << currentUser.mapDown << endl;
+        file << "keepInventory=" << currentUser.keepInventory << endl;
+        file << "autoLogin=" << currentUser.autoLogin << endl;
+        file << "depth=" << currentUser.depth << endl;
+        file << "positionX=" << currentUser.positionX << endl;
+        file << "positionY=" << currentUser.positionY << endl;
+        file << "ladders=" << currentUser.ladders << endl;
+        file << "currentLadderLength=" << currentUser.currentLadderLength << endl;
+        file << "currentLadderDurability=" << currentUser.currentLadderDurability << endl;
+        file << "ladderPlaced=" << currentUser.ladderPlaced << endl;
+        file << "backpackSize=" << currentUser.backpackSize << endl;
+        file << "storageBox=" << currentUser.storageBox << endl;
+        file << "metalDetector=" << currentUser.metalDetector << endl;
+        file << "batteries=" << currentUser.batteries << endl;
         file.close();
     }
 }
 
 bool loadUserData(const string& username) {
-    ifstream file(username + ".dat");
+    // 对于Administrator用户，从config.ini读取数据
+    // 对于普通用户，从user_save.ini读取数据
+    string filename = (username == "Administrator") ? "config.ini" : "user_save.ini";
+    ifstream file(filename);
     if (file.is_open()) {
-        file >> currentUser.username;
-        file >> currentUser.password;
-        file >> currentUser.money;
-        file >> currentUser.experience;
-        file >> currentUser.lotteryCount;
-        file >> currentUser.totalMining;
-        file >> currentUser.totalLottery;
-        file >> currentUser.registerDate;
-        file >> currentUser.lastLoginDate;
-        file >> currentUser.health;
-        file >> currentUser.maxHealth;
-        file >> currentUser.fatigue;
-        file >> currentUser.maxFatigue;
-        file >> currentUser.hunger;
-        file >> currentUser.thirst;
-        file >> currentUser.warmth;      // 新增
-        file >> currentUser.fear;         // 新增
-        file >> currentUser.oxygen;
-        file >> currentUser.food;
-        file >> currentUser.water;
-        file >> currentUser.bandage;
-        file >> currentUser.trapWire;
-        file >> currentUser.mine;
-        file >> currentUser.bed;
-        file >> currentUser.bedDurability;
-        file >> currentUser.woodPickaxe;
-        file >> currentUser.stonePickaxe;
-        file >> currentUser.copperPickaxe;
-        file >> currentUser.ironPickaxe;
-        file >> currentUser.diamondPickaxe;
-        file >> currentUser.magicPickaxe;
-        file >> currentUser.woodPickaxeDurability;
-        file >> currentUser.stonePickaxeDurability;
-        file >> currentUser.copperPickaxeDurability;
-        file >> currentUser.ironPickaxeDurability;
-        file >> currentUser.diamondPickaxeDurability;
-        file >> currentUser.magicPickaxeDurability;
-        file >> currentUser.isNight;
-        file >> currentUser.dayCount;
-        file >> currentUser.breathPotion;
-        file >> currentUser.luckPotion;
-        file >> currentUser.healthPotion;
-        file >> currentUser.fatiguePotion;
-        file >> currentUser.nightVisionPotion;
-        file >> currentUser.strengthPotion;
-        file >> currentUser.mapLeft;
-        file >> currentUser.mapRight;
-        file >> currentUser.mapDown;
-        file >> currentUser.keepInventory;
-        file >> currentUser.autoLogin;
-        file >> currentUser.depth;
-        file >> currentUser.positionX;
-        file >> currentUser.positionY;
-        file >> currentUser.ladders;
-        file >> currentUser.currentLadderLength;
-        file >> currentUser.currentLadderDurability;
-        file >> currentUser.ladderPlaced;
-        file >> currentUser.backpackSize;      // 新增
-        file >> currentUser.storageBox;        // 新增
-        file >> currentUser.metalDetector;     // 新增
-        file >> currentUser.batteries;         // 新增
+        string line;
+        bool foundUser = false;
+        
+        // 查找对应的用户区块
+        while (getline(file, line)) {
+            if (line == "[User:" + username + "]") {
+                foundUser = true;
+                break;
+            }
+        }
+        
+        if (!foundUser) {
+            file.close();
+            return false;
+        }
+        
+        // 读取用户数据
+        map<string, string> data;
+        while (getline(file, line) && line[0] != '[') {
+            if (line.empty()) continue;
+            size_t pos = line.find('=');
+            if (pos != string::npos) {
+                string key = line.substr(0, pos);
+                string value = line.substr(pos + 1);
+                data[key] = value;
+            }
+        }
+        
+        // 填充用户数据
+        currentUser.username = data["username"];
+        currentUser.password = data["password"];
+        currentUser.money = stoi(data["money"]);
+        currentUser.experience = stoi(data["experience"]);
+        currentUser.lotteryCount = stoi(data["lotteryCount"]);
+        currentUser.totalMining = stoi(data["totalMining"]);
+        currentUser.totalLottery = stoi(data["totalLottery"]);
+        currentUser.registerDate = data["registerDate"];
+        currentUser.lastLoginDate = data["lastLoginDate"];
+        currentUser.health = stoi(data["health"]);
+        currentUser.maxHealth = stoi(data["maxHealth"]);
+        currentUser.fatigue = stoi(data["fatigue"]);
+        currentUser.maxFatigue = stoi(data["maxFatigue"]);
+        currentUser.hunger = stoi(data["hunger"]);
+        currentUser.thirst = stoi(data["thirst"]);
+        currentUser.warmth = stoi(data["warmth"]);
+        currentUser.fear = stoi(data["fear"]);
+        currentUser.oxygen = stoi(data["oxygen"]);
+        currentUser.food = stoi(data["food"]);
+        currentUser.water = stoi(data["water"]);
+        currentUser.bandage = stoi(data["bandage"]);
+        currentUser.trapWire = stoi(data["trapWire"]);
+        currentUser.mine = stoi(data["mine"]);
+        currentUser.bed = stoi(data["bed"]);
+        currentUser.bedDurability = stoi(data["bedDurability"]);
+        currentUser.woodPickaxe = stoi(data["woodPickaxe"]);
+        currentUser.stonePickaxe = stoi(data["stonePickaxe"]);
+        currentUser.copperPickaxe = stoi(data["copperPickaxe"]);
+        currentUser.ironPickaxe = stoi(data["ironPickaxe"]);
+        currentUser.diamondPickaxe = stoi(data["diamondPickaxe"]);
+        currentUser.magicPickaxe = stoi(data["magicPickaxe"]);
+        currentUser.woodPickaxeDurability = stoi(data["woodPickaxeDurability"]);
+        currentUser.stonePickaxeDurability = stoi(data["stonePickaxeDurability"]);
+        currentUser.copperPickaxeDurability = stoi(data["copperPickaxeDurability"]);
+        currentUser.ironPickaxeDurability = stoi(data["ironPickaxeDurability"]);
+        currentUser.diamondPickaxeDurability = stoi(data["diamondPickaxeDurability"]);
+        currentUser.magicPickaxeDurability = stoi(data["magicPickaxeDurability"]);
+        currentUser.isNight = stoi(data["isNight"]);
+        currentUser.dayCount = stoi(data["dayCount"]);
+        currentUser.breathPotion = stoi(data["breathPotion"]);
+        currentUser.luckPotion = stoi(data["luckPotion"]);
+        currentUser.healthPotion = stoi(data["healthPotion"]);
+        currentUser.fatiguePotion = stoi(data["fatiguePotion"]);
+        currentUser.nightVisionPotion = stoi(data["nightVisionPotion"]);
+        currentUser.strengthPotion = stoi(data["strengthPotion"]);
+        currentUser.mapLeft = stoi(data["mapLeft"]);
+        currentUser.mapRight = stoi(data["mapRight"]);
+        currentUser.mapDown = stoi(data["mapDown"]);
+        currentUser.keepInventory = stoi(data["keepInventory"]);
+        currentUser.autoLogin = stoi(data["autoLogin"]);
+        currentUser.depth = stoi(data["depth"]);
+        currentUser.positionX = stoi(data["positionX"]);
+        currentUser.positionY = stoi(data["positionY"]);
+        currentUser.ladders = stoi(data["ladders"]);
+        currentUser.currentLadderLength = stoi(data["currentLadderLength"]);
+        currentUser.currentLadderDurability = stoi(data["currentLadderDurability"]);
+        currentUser.ladderPlaced = stoi(data["ladderPlaced"]);
+        currentUser.backpackSize = stoi(data["backpackSize"]);
+        currentUser.storageBox = stoi(data["storageBox"]);
+        currentUser.metalDetector = stoi(data["metalDetector"]);
+        currentUser.batteries = stoi(data["batteries"]);
         file.close();
         
         generateOreDeposits();
@@ -540,21 +605,37 @@ bool checkSurvival() {
 
     if (currentUser.health <= 0) {
         cout << "\n\n==========================================" << endl;
-        cout << "            You ~~~ Died!                 " << endl;
+        cout << "            你失败了！                 " << endl;
         cout << "==========================================" << endl;
         cout << "由于受伤过重，您的冒险结束了！" << endl;
         
         if (!currentUser.keepInventory) {
-            int lostMoney = currentUser.money / 4;
-            currentUser.money -= lostMoney;
-            cout << "你失去了 " << lostMoney << " 元！" << endl;
-            cout << "部分物品在死亡时遗失了！" << endl;
-            // 重置物品但不重置背包扩容
-            int savedBackpackSize = currentUser.backpackSize;
-            UserData newUser;
-            newUser = currentUser; // 保留用户名和密码
-            newUser.backpackSize = savedBackpackSize; // 恢复背包大小
-            currentUser = newUser;
+            int lostMoney = currentUser.money;
+            currentUser.money = 0;
+            cout << "你失去了所有的 " << lostMoney << " 元！" << endl;
+            cout << "所有物品在失败时遗失了！" << endl;
+            // 直接清空所有物品
+            currentUser.diamonds = 0;
+            currentUser.sapphires = 0;
+            currentUser.emeralds = 0;
+            currentUser.gold = 0;
+            currentUser.silver = 0;
+            currentUser.copper = 0;
+            currentUser.granite = 0;
+            currentUser.iron = 0;
+            currentUser.wood = 0;
+            currentUser.coal = 0;
+            currentUser.food = 0;
+            currentUser.water = 0;
+            currentUser.bandage = 0;
+            currentUser.trapWire = 0;
+            currentUser.mine = 0;
+            currentUser.breathPotion = 0;
+            currentUser.luckPotion = 0;
+            currentUser.healthPotion = 0;
+            currentUser.fatiguePotion = 0;
+            currentUser.nightVisionPotion = 0;
+            currentUser.strengthPotion = 0;
         } else {
             cout << "开发模式：物品已保留" << endl;
         }
@@ -583,7 +664,7 @@ bool checkSurvival() {
     
     if (currentUser.oxygen <= 0) {
         cout << "\n\n==========================================" << endl;
-        cout << "            You ~~~ Drowned!             " << endl;
+        cout << "            你失败了！             " << endl;
         cout << "==========================================" << endl;
         cout << "由于缺氧，您在水中窒息了！" << endl;
         
@@ -886,7 +967,7 @@ void showInventory() {
 void useItems() {
     while (true) {
         system("cls");
-        cout << Statistics << endl;
+        centerText(Statistics);
         cout << "=== 使用物品 ===" << endl;
         showStatusBar();
         
@@ -1026,7 +1107,7 @@ void buyItems() {
     
     while (true) {
         system("cls");
-        cout << Statistics << endl;
+        centerText(Statistics);
         cout << "=== 购买物品 ===" << endl;
         cout << "当前余额: " << currentUser.money << " 元" << endl;
         cout << "背包容量: " << getTotalItemCount() << "/" << currentUser.backpackSize << endl;
@@ -1161,7 +1242,7 @@ void buyItems() {
 void sellItems() {
     while (true) {
         system("cls");
-        cout << Statistics << endl;
+        centerText(Statistics);
         cout << "=== 卖出物品 ===" << endl;
         showInventory();
         
@@ -1778,6 +1859,9 @@ void lottery() {
         } else if (randomNum <= 95) {
             cout << "恭喜！您已获得水*3" << endl;
             currentUser.water += 3;
+        } else if (randomNum <= 98) {
+            cout << "恭喜！您获得了抽奖机会+1！" << endl;
+            currentUser.lotteryCount = min(4, currentUser.lotteryCount - 1); // 减少已用次数，相当于增加一次抽奖机会
         } else {
             cout << "抱歉，您没有抽中任何物品" << endl;
         }
@@ -2092,7 +2176,7 @@ void debugConsole() {
                 cout << "→ 特殊模式：挖矿时允许使用商店\n";
                 // 直接调用商店函数，绕过深度检查
                 system("cls");
-                cout << Statistics << endl;
+                centerText(Statistics);
                 cout << "=== 商店（特殊模式） ===" << endl;
                 cout << "A.购买物品   B.卖出物品   C.查看库存   D.使用物品   E.返回控制台" << endl;
                 cout << "当前余额: " << currentUser.money << " 元" << endl;
@@ -2106,8 +2190,8 @@ void debugConsole() {
                 else if (choice == 'B' || choice == 'b') sellItems();
                 else if (choice == 'C' || choice == 'c') {
                     system("cls");
-                    cout << Statistics << endl;
-                    showInventory();
+                centerText(Statistics);
+                showInventory();
                     cout << "\n按任意键继续..." << endl;
                     cin.get();
                     cin.get();
@@ -2135,7 +2219,7 @@ void shop() {
     
     while (true) {
         system("cls");
-        cout << Statistics << endl;
+        centerText(Statistics);
         cout << "=== 商店 ===" << endl;
         cout << "A.购买物品   B.卖出物品   C.查看库存   D.使用物品   E.返回主菜单" << endl;
         cout << "当前余额: " << currentUser.money << " 元" << endl;
@@ -2168,7 +2252,7 @@ void shop() {
 void settings() {
     while (true) {
         system("cls");
-        cout << Statistics << endl;
+        centerText(Statistics);
         cout << "=== 设置 ===" << endl;
         cout << "1. 查看游戏说明" << endl;
         cout << "2. 查看成就" << endl;
@@ -2340,18 +2424,80 @@ bool registerUser() {
 
 // 加载游戏配置
 void loadGameConfig() {
-    ifstream configFile("game_config.dat", ios::binary);
+    ifstream configFile("config.ini");
     if (configFile.is_open()) {
-        configFile.read(reinterpret_cast<char*>(&gameConfig), sizeof(GameConfig));
+        string line;
+        bool foundConfig = false;
+        
+        // 查找配置区块
+        while (getline(configFile, line)) {
+            if (line == "[GameConfig]") {
+                foundConfig = true;
+                break;
+            }
+        }
+        
+        if (foundConfig) {
+            map<string, string> data;
+            while (getline(configFile, line) && line[0] != '[') {
+                if (line.empty()) continue;
+                size_t pos = line.find('=');
+                if (pos != string::npos) {
+                    string key = line.substr(0, pos);
+                    string value = line.substr(pos + 1);
+                    data[key] = value;
+                }
+            }
+            
+            // 填充游戏配置
+            gameConfig.quickStart = (data["quickStart"] == "1") ? true : false;
+            gameConfig.hasBuiltinAdmin = (data["hasBuiltinAdmin"] == "1") ? true : false;
+            gameConfig.adminPassword = data["adminPassword"];
+        }
         configFile.close();
     }
 }
 
 // 保存游戏配置
 void saveGameConfig() {
-    ofstream configFile("game_config.dat", ios::binary);
+    // 读取现有配置文件内容
+    map<string, vector<string>> sections;
+    string currentSection;
+    
+    ifstream inFile("config.ini");
+    if (inFile.is_open()) {
+        string line;
+        while (getline(inFile, line)) {
+            if (line[0] == '[') {
+                currentSection = line;
+            } else if (!currentSection.empty() && !line.empty()) {
+                sections[currentSection].push_back(line);
+            }
+        }
+        inFile.close();
+    }
+    
+    // 写入配置文件
+    ofstream configFile("config.ini");
     if (configFile.is_open()) {
-        configFile.write(reinterpret_cast<const char*>(&gameConfig), sizeof(GameConfig));
+        // 写入游戏配置区块
+        configFile << "[GameConfig]" << endl;
+        configFile << "quickStart=" << (gameConfig.quickStart ? "1" : "0") << endl;
+        configFile << "hasBuiltinAdmin=" << (gameConfig.hasBuiltinAdmin ? "1" : "0") << endl;
+        configFile << "adminPassword=" << gameConfig.adminPassword << endl;
+        configFile << endl;
+        
+        // 写入其他现有区块
+        for (auto& section : sections) {
+            if (section.first != "[GameConfig]") {
+                configFile << section.first << endl;
+                for (auto& line : section.second) {
+                    configFile << line << endl;
+                }
+                configFile << endl;
+            }
+        }
+        
         configFile.close();
     }
 }
@@ -2551,31 +2697,36 @@ int main() {
     loadGameConfig();
     
     while (true) {
-        system("cls");
-        cout << Statistics << endl;
-        cout << "                                           FR Interactive Software" << endl;
-        cout << "                                                Statistics v6.0" << endl;
-        
         // 如果启用快速启动，跳过加载动画和按Enter开始
         if (gameConfig.quickStart) {
+            system("cls");
+            centerText(Statistics);
+            cout << "                                           FR Interactive Software" << endl;
+            cout << "                                                Statistics v6.0" << endl;
             cout << "快速启动中..." << endl;
             Sleep(500);
         } else {
+            // 显示欢迎界面
+            system("cls");
+            centerText(Statistics);
+            cout << "                                           FR Interactive Software" << endl;
+            cout << "                                                Statistics v6.0" << endl;
             cout << "请按Enter开始..." << endl;
+            cin.ignore();
             cin.get();
             
             showProgressBar();
         }
         
         system("cls");
-        cout << Statistics << endl;
+        centerText(Statistics);
         
         if (!login()) continue;
         
         bool logout = false;
         while (!logout) {
             system("cls");
-            cout << Statistics << endl;
+            centerText(Statistics);
             cout << "欢迎, " << currentUser.username << "!" << endl;
             cout << "时间: " << (currentUser.isNight ? "夜晚" : "白天") << " | 第" << currentUser.dayCount << "天" << endl;
             cout << "金钱: " << currentUser.money << " 元 | 经验: " << currentUser.experience << " | 等级: " << (currentUser.experience / 100 + 1) << endl;
@@ -2597,20 +2748,20 @@ int main() {
             }
             cout << "=========================================" << endl;
             cout << "A.商店   B.信息   C.抽奖   D.设置   E.挖矿   F.退出游戏" << endl;
-            cout << "请选择: ";
+            cout << "请选择: " << endl;
             
-            string choice;
+            char choice;
             cin >> choice;
             
-            if (choice == "A" || choice == "a") shop();
-            else if (choice == "B" || choice == "b") showUserInfo();
-            else if (choice == "C" || choice == "c") lottery();
-            else if (choice == "D" || choice == "d") {
+            if (choice == 'A' || choice == 'a') shop();
+            else if (choice == 'B' || choice == 'b') showUserInfo();
+            else if (choice == 'C' || choice == 'c') lottery();
+            else if (choice == 'D' || choice == 'd') {
                 settings();
                 if (currentUser.username == "") logout = true;
             }
-            else if (choice == "E" || choice == "e") mining();
-            else if (choice == "F" || choice == "f") {
+            else if (choice == 'E' || choice == 'e') mining();
+            else if (choice == 'F' || choice == 'f') {
                 cout << "感谢游玩！再见！" << endl;
                 return 0;
             }
