@@ -1,7 +1,8 @@
 <div align="center">
-<img width="1170" height="1170" alt="Statistics" src="https://github.com/user-attachments/assets/a8db3784-bf89-460b-b56c-897246a46157" />
+<img width="300" height="283" alt="Statistics-字母" src="https://github.com/user-attachments/assets/dff402ef-6075-412c-b050-9b978fbc300c" />
 </div>
 
 
 # StatisticsGame
+
 
